@@ -1,0 +1,17 @@
+# never commit these
+.env
+hadith.pdf
+*.pdf
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+hadithvenv/
+venv/
+.hadithvenv/
+.venv/
+*.egg-info/
+dist/
+build/
+hadith.pdf
+Untitled.ipynb
+.ipynb_checkpoints/

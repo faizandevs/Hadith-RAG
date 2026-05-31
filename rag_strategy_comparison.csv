@@ -1,0 +1,6 @@
+strategy,n_chunks,median_tok,hit@3,MRR,avg_ret_tok
+fixed_no_overlap,3744.0,256.0,0.583,0.542,256.0
+fixed_overlap,4652.0,256.0,0.583,0.583,256.0
+recursive,4832.0,251.0,0.667,0.583,214.4
+semantic,6719.0,121.0,0.583,0.542,156.2
+hadith_aware,7128.0,109.0,0.667,0.583,128.1
