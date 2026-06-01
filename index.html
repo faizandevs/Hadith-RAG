@@ -443,6 +443,7 @@
 
         try {
           const resp = await fetch(`${API_URL}/chat`, {
+            mode: "cors",
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ query }),
