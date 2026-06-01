@@ -57,3 +57,10 @@ def chat(req: QueryRequest):
     result = rag.answer_query(req.query)
     return result
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
