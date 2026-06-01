@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bukhari RAG — Hadith Chatbot</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0f0f0f;
+        color: #e8e8e8;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        padding: 16px 24px;
+        border-bottom: 1px solid #222;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      header h1 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #fff;
+      }
+
+      header span {
+        font-size: 12px;
+        color: #666;
+        padding: 2px 8px;
+        border: 1px solid #333;
+        border-radius: 4px;
+      }
+
+      #chat-window {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 760px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .message {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 100%;
+      }
+
+      .message.user {
+        align-items: flex-end;
+      }
+      .message.bot {
+        align-items: flex-start;
+      }
+
+      .bubble {
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 15px;
+        line-height: 1.6;
+        max-width: 85%;
+      }
+
+      .user .bubble {
+        background: #1a5fb4;
+        color: #fff;
+        border-radius: 12px 12px 2px 12px;
+      }
+
+      .bot .bubble {
+        background: #1e1e1e;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px 12px 12px 2px;
+      }
+
+      .citations {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        padding: 0 4px;
+      }
+
+      .citation-tag {
+        font-size: 11px;
+        padding: 2px 8px;
+        background: #1a3a1a;
+        border: 1px solid #2d5a2d;
+        color: #6fcf6f;
+        border-radius: 4px;
+      }
+
+      .sources-toggle {
+        font-size: 12px;
+        color: #555;
+        cursor: pointer;
+        padding: 0 4px;
+        background: none;
+        border: none;
+        text-align: left;
+      }
+
+      .sources-toggle:hover {
+        color: #888;
+      }
+
+      .sources {
+        display: none;
+        background: #141414;
+        border: 1px solid #222;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 13px;
+        color: #888;
+        line-height: 1.6;
+        max-width: 85%;
+        white-space: pre-wrap;
+      }
+
+      .sources.open {
+        display: block;
+      }
+
+      .typing {
+        display: flex;
+        gap: 4px;
+        padding: 16px;
+        background: #1e1e1e;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        width: fit-content;
+      }
+
+      .typing span {
+        width: 6px;
+        height: 6px;
+        background: #555;
+        border-radius: 50%;
+        animation: bounce 1.2s infinite;
+      }
+
+      .typing span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes bounce {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+        }
+        30% {
+          transform: translateY(-6px);
+          background: #888;
+        }
+      }
+
+      #input-area {
+        padding: 16px 24px;
+        border-top: 1px solid #222;
+        display: flex;
+        gap: 10px;
+        max-width: 760px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      #query-input {
+        flex: 1;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        color: #e8e8e8;
+        padding: 12px 16px;
+        font-size: 15px;
+        resize: none;
+        height: 48px;
+        max-height: 120px;
+        overflow-y: auto;
+        line-height: 1.4;
+        font-family: inherit;
+      }
+
+      #query-input:focus {
+        outline: none;
+        border-color: #1a5fb4;
+      }
+
+      #query-input::placeholder {
+        color: #444;
+      }
+
+      #send-btn {
+        background: #1a5fb4;
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        width: 48px;
+        height: 48px;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      #send-btn:hover {
+        background: #1557a8;
+      }
+      #send-btn:disabled {
+        background: #333;
+        cursor: not-allowed;
+      }
+
+      .empty-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: #333;
+        text-align: center;
+        padding: 40px;
+      }
+
+      .empty-state h2 {
+        font-size: 22px;
+        color: #555;
+        font-weight: 500;
+      }
+      .empty-state p {
+        font-size: 14px;
+        max-width: 360px;
+        line-height: 1.6;
+      }
+
+      .suggestions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .suggestion {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 13px;
+        color: #888;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .suggestion:hover {
+        border-color: #1a5fb4;
+        color: #ccc;
+      }
+
+      .cold-start-notice {
+        font-size: 12px;
+        color: #555;
+        text-align: center;
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>📖 Bukhari RAG</h1>
+      <span>Sahih Bukhari · 7,128 hadiths</span>
+    </header>
+
+    <div id="chat-window">
+      <div class="empty-state" id="empty-state">
+        <h2>Ask about Sahih Bukhari</h2>
+        <p>
+          This chatbot retrieves answers directly from the hadith corpus using
+          semantic search.
+        </p>
+        <div class="suggestions">
+          <button class="suggestion" onclick="fillQuery(this)">
+            What did the Prophet say about intentions?
+          </button>
+          <button class="suggestion" onclick="fillQuery(this)">
+            How should ablution (wudu) be performed?
+          </button>
+          <button class="suggestion" onclick="fillQuery(this)">
+            What is the virtue of the Friday prayer?
+          </button>
+          <button class="suggestion" onclick="fillQuery(this)">
+            What would happen to the least punished person of Hell?
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width: 760px; width: 100%; margin: 0 auto">
+      <p class="cold-start-notice" id="cold-notice">
+        ⚡ First response may take 30–60s (server cold start) — subsequent
+        responses are fast
+      </p>
+    </div>
+
+    <div id="input-area">
+      <textarea
+        id="query-input"
+        placeholder="Ask a question about Sahih Bukhari..."
+        rows="1"
+      ></textarea>
+      <button id="send-btn" onclick="sendQuery()">↑</button>
+    </div>
+
+    <script>
+      // ── config ────────────────────────────────────────────────
+      // replace with your actual Render URL after deployment
+      const API_URL = "https://faizandevs7-bukhari-rag.hf.space/";
+
+      const chatWindow = document.getElementById("chat-window");
+      const emptyState = document.getElementById("empty-state");
+      const input = document.getElementById("query-input");
+      const sendBtn = document.getElementById("send-btn");
+      const coldNotice = document.getElementById("cold-notice");
+
+      // auto-resize textarea
+      input.addEventListener("input", () => {
+        input.style.height = "48px";
+        input.style.height = Math.min(input.scrollHeight, 120) + "px";
+      });
+
+      // enter to send (shift+enter for newline)
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendQuery();
+        }
+      });
+
+      function fillQuery(btn) {
+        input.value = btn.textContent;
+        input.focus();
+      }
+
+      function addMessage(role, content, citations = [], chunks = []) {
+        // remove empty state on first message
+        if (emptyState) emptyState.remove();
+        coldNotice.style.display = "none";
+
+        const msg = document.createElement("div");
+        msg.className = `message ${role}`;
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = content;
+        msg.appendChild(bubble);
+
+        // citations
+        if (citations.length > 0) {
+          const citeRow = document.createElement("div");
+          citeRow.className = "citations";
+          citations.forEach((c) => {
+            const tag = document.createElement("span");
+            tag.className = "citation-tag";
+            tag.textContent = c;
+            citeRow.appendChild(tag);
+          });
+          msg.appendChild(citeRow);
+        }
+
+        // show sources toggle
+        if (chunks.length > 0) {
+          const toggle = document.createElement("button");
+          toggle.className = "sources-toggle";
+          toggle.textContent = "▸ show retrieved hadiths";
+
+          const sources = document.createElement("div");
+          sources.className = "sources";
+          sources.textContent = chunks.join("\n\n──────────\n\n");
+
+          toggle.onclick = () => {
+            sources.classList.toggle("open");
+            toggle.textContent = sources.classList.contains("open")
+              ? "▾ hide retrieved hadiths"
+              : "▸ show retrieved hadiths";
+          };
+
+          msg.appendChild(toggle);
+          msg.appendChild(sources);
+        }
+
+        chatWindow.appendChild(msg);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        return msg;
+      }
+
+      function addTyping() {
+        const msg = document.createElement("div");
+        msg.className = "message bot";
+        msg.id = "typing-indicator";
+        msg.innerHTML = `<div class="typing">
+      <span></span><span></span><span></span>
+    </div>`;
+        chatWindow.appendChild(msg);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+
+      function removeTyping() {
+        const t = document.getElementById("typing-indicator");
+        if (t) t.remove();
+      }
+
+      async function sendQuery() {
+        const query = input.value.trim();
+        if (!query || sendBtn.disabled) return;
+
+        // show user message
+        addMessage("user", query);
+        input.value = "";
+        input.style.height = "48px";
+        sendBtn.disabled = true;
+
+        // show typing indicator
+        addTyping();
+
+        try {
+          const resp = await fetch(`${API_URL}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query }),
+          });
+
+          if (!resp.ok) {
+            throw new Error(`Server error: ${resp.status}`);
+          }
+
+          const data = await resp.json();
+          removeTyping();
+          addMessage("bot", data.answer, data.citations, data.chunks);
+        } catch (err) {
+          removeTyping();
+          addMessage(
+            "bot",
+            "Error connecting to server. If this is the first request, wait 60 seconds for cold start and try again.",
+            [],
+            [],
+          );
+          console.error(err);
+        }
+
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    </script>
+  </body>
+</html>
